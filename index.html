@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Chat</title>
+  </head>
+  <body>
+    <h1>Simple WebSocket Chat</h1>
+
+    <div>
+      <label for="userId">Your User ID:</label>
+      <input type="text" id="userId" placeholder="Enter your ID" />
+      <button id="registerBtn">Register</button>
+    </div>
+
+    <div>
+      <label for="receiverId">Receiver's ID:</label>
+      <input type="text" id="receiverId" placeholder="Enter receiver's ID" />
+    </div>
+
+    <div>
+      <label for="message">Message:</label>
+      <input type="text" id="message" placeholder="Enter your message" />
+      <button id="sendBtn">Send</button>
+    </div>
+
+    <h3>Chat Log:</h3>
+    <div
+      id="chatLog"
+      style="
+        border: 1px solid #000;
+        padding: 10px;
+        height: 200px;
+        overflow-y: scroll;
+      "
+    ></div>
+
+    <script>
+      const ws = new WebSocket("ws://localhost:5000");
+
+      const userIdInput = document.getElementById("userId");
+      const receiverIdInput = document.getElementById("receiverId");
+      const messageInput = document.getElementById("message");
+      const chatLog = document.getElementById("chatLog");
+
+      document.getElementById("registerBtn").addEventListener("click", () => {
+        const userId = userIdInput.value;
+        if (userId) {
+          ws.send(JSON.stringify({ type: "register", userId }));
+          logMessage(`You registered as: ${userId}`);
+        }
+      });
+
+      document.getElementById("sendBtn").addEventListener("click", () => {
+        const message = messageInput.value;
+        const receiverId = receiverIdInput.value;
+        if (message && receiverId) {
+          ws.send(
+            JSON.stringify({
+              type: "message",
+              sender: userIdInput.value,
+              receiver: receiverId,
+              message: message,
+            })
+          );
+          logMessage(`You: ${message}`);
+          messageInput.value = "";
+        }
+      });
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        logMessage(`${data.sender}: ${data.message}`);
+      };
+
+      function logMessage(message) {
+        const logEntry = document.createElement("div");
+        logEntry.textContent = message;
+        chatLog.appendChild(logEntry);
+      }
+    </script>
+  </body>
+</html>
